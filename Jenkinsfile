@@ -108,9 +108,8 @@ pipeline {
                             echo "Copying necessary files and deploying to the server..."
 
                             ssh -o StrictHostKeyChecking=no ${remoteHost} 'mkdir -p ${REMOTE_DIR}'
-                            ssh -o StrictHostKeyChecking=no ${remoteHost} 'rm -rf ${REMOTE_DIR}/*' # Очищаем директорию перед копированием
+                            ssh -o StrictHostKeyChecking=no ${remoteHost} 'rm -rf ${REMOTE_DIR}/*'
 
-                            # Копируем docker-compose.yml и .env файл на удаленный сервер
                             rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./docker-compose.yml ${remoteHost}:${REMOTE_DIR}/
                             scp -o StrictHostKeyChecking=no ${SECRET_FILE_PATH} ${remoteHost}:${REMOTE_DIR}/.env
 
@@ -140,12 +139,15 @@ pipeline {
                                 sh "curl --fail --silent http://${REMOTE_HOST_IP}:5000/ping"
                                 echo "Application health check successful!"
                                 break
-                        } catch (e) {
-                            if (i < maxRetries - 1) {
-                                echo "Application health check failed (attempt ${i + 1}/${maxRetries}). Retrying in ${delayBetweenRetries} seconds..."
-                                sleep delayBetweenRetries
-                        } else {
-                            error "Application health check failed after ${maxRetries} attempts."
+                            } catch (e) {
+                                if (i < maxRetries - 1) {
+                                    echo "Application health check failed (attempt ${i + 1}/${maxRetries}). Retrying in ${delayBetweenRetries} seconds..."
+                                    sleep delayBetweenRetries
+                                } else {
+                                    error "Application health check failed after ${maxRetries} attempts."
+                                }
+                            }
+                        }
                     }
                 }
             }
