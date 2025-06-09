@@ -191,6 +191,8 @@ docker run -d -p 8080:8080 -p 50000:50000 --name jenkins-blueocean \
 **Скриншот успешного завершения пайплайна**:
 
 ![Успешное завершение Jenkins Pipeline](https://i.ibb.co/W4st93KB/image.png)
+- http://37.9.53.144:5000/ping
+- http://37.9.53.144:5000/results
 
 ---
 
