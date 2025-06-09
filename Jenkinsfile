@@ -111,7 +111,7 @@ pipeline {
                             ssh -o StrictHostKeyChecking=no ${remoteHost} 'rm -rf ${REMOTE_DIR}/*'
 
                             rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./docker-compose.yml ${remoteHost}:${REMOTE_DIR}/
-                            scp -o StrictHostKeyChecking=no ${SECRET_FILE_PATH} ${remoteHost}:${REMOTE_DIR}/.env
+                            rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ${SECRET_FILE_PATH} ${remoteHost}:${REMOTE_DIR}/.env
 
                             ssh ${remoteHost} '
                                 cd ${REMOTE_DIR} && \\
