@@ -24,9 +24,13 @@ pipeline {
         stage('Lint') {
             steps {
                 script {
-                    sh 'pip install --upgrade pip'
-                    sh 'python -m pip install flake8'
-                    sh 'flake8 . || true' // Запускаем flake8. '|| true' позволяет пайплайну не упасть, если есть ошибки линтинга.
+                    sh """
+                    docker run --rm \\
+                        -v "$(pwd):/app" \\
+                        -w /app \\
+                        python:3.10-slim \\
+                        bash -c "pip install --no-cache-dir flake8 && flake8 . || true"
+                    """
                 }
             }
         }
