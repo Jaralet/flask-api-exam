@@ -4,6 +4,5 @@ __pycache__/
 venv/
 .venv/
 *.log
-migrations/
 *.sqlite
 .vscode/ 
