@@ -1,5 +1,3 @@
-// flask-api/Jenkinsfile
-
 pipeline {
     agent any
 
@@ -24,12 +22,6 @@ pipeline {
         }
 
         stage('Lint') {
-            agent {
-                docker {
-                    image 'python:3.10-slim'
-                    args '--user root'
-                }
-            }
             steps {
                 script {
                     sh 'pip install --upgrade pip'
@@ -58,11 +50,11 @@ pipeline {
                         ssh -o StrictHostKeyChecking=no ${remoteHost} '
                             if ! command -v docker &> /dev/null; then
                                 echo "Installing Docker..."
-                                sudo apt-get update && \
-                                sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common && \
-                                curl -fsSL https://get.docker.com -o get-docker.sh && \
-                                sudo sh get-docker.sh && \
-                                sudo systemctl start docker && \
+                                sudo apt-get update && \\
+                                sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common && \\
+                                curl -fsSL https://get.docker.com -o get-docker.sh && \\
+                                sudo sh get-docker.sh && \\
+                                sudo systemctl start docker && \\
                                 sudo systemctl enable docker
                             else
                                 echo "Docker is already installed"
@@ -70,8 +62,8 @@ pipeline {
 
                             if ! command -v docker-compose &> /dev/null; then
                                 echo "Installing Docker Compose..."
-                                sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-\$(uname -s)-\$(uname -m)" -o /usr/local/bin/docker-compose && \
-                                sudo chmod +x /usr/local/bin/docker-compose && \
+                                sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-\$(uname -s)-\$(uname -m)" -o /usr/local/bin/docker-compose && \\
+                                sudo chmod +x /usr/local/bin/docker-compose && \\
                                 sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
                             else
                                 echo "Docker Compose is already installed"
@@ -105,7 +97,7 @@ pipeline {
         stage('Deploy to Remote Server') {
             steps {
                 sshagent([SSH_CREDENTIALS_ID]) {
-                    withCredentials([file(credentialsId: SECRETS_FILE_ID, variable: 'SECRET_FILE_PATH')]) { // Передаем путь к файлу
+                    withCredentials([file(credentialsId: SECRETS_FILE_ID, variable: 'SECRET_FILE_PATH')]) {
                         script {
                             def remoteHost = "${params.REMOTE_USER}@${params.REMOTE_HOST_IP}"
                             sh """
@@ -119,13 +111,29 @@ pipeline {
                             scp -o StrictHostKeyChecking=no ${SECRET_FILE_PATH} ${remoteHost}:${REMOTE_DIR}/.env
 
                             ssh ${remoteHost} '
-                                cd ${REMOTE_DIR} && \
-                                sudo docker-compose down || true && \
-                                sudo docker-compose pull && \
+                                cd ${REMOTE_DIR} && \\
+                                sudo docker-compose down || true && \\
+                                sudo docker-compose pull && \\
                                 sudo docker-compose up -d --remove-orphans
                             '
                             """
                         }
+                    }
+                }
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                script {
+                    def checkUrl = "http://${params.REMOTE_HOST_IP}:5000/ping"
+                    echo "Checking application health at ${checkUrl}"
+                    try {
+                        sh "curl --fail --silent ${checkUrl}" // --fail вернет ненулевой код при ошибке HTTP (4xx/5xx)
+                        echo "Application is healthy!"
+                    } catch (e) {
+                        echo "Application health check failed: ${e.message}"
+                        error "Deployment verification failed!"
                     }
                 }
             }
