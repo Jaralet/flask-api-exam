@@ -26,7 +26,7 @@ pipeline {
                 script {
                     sh """
                     docker run --rm \\
-                        -v "$(pwd):/app" \\
+                        -v "\$(pwd):/app" \\
                         -w /app \\
                         python:3.10-slim \\
                         bash -c "pip install --no-cache-dir flake8 && flake8 . || true"
