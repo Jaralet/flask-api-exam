@@ -20,6 +20,16 @@ pipeline {
                 checkout scm
             }
         }
+        stage('Debug Workspace Contents') {
+            steps {
+                script {
+                    echo "Listing contents of workspace after checkout:"
+                    sh 'ls -R'
+                    echo "Checking of migrations directory exists and it contents"
+                    sh 'ls -R migrations || echo "migrations directory not found or empty"'
+                }
+            }
+        }
 
         stage('Lint') {
             steps {
