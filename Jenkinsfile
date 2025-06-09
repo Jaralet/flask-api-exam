@@ -130,14 +130,22 @@ pipeline {
         stage('Verify Deployment') {
             steps {
                 script {
-                    def checkUrl = "http://${params.REMOTE_HOST_IP}:5000/ping"
-                    echo "Checking application health at ${checkUrl}"
-                    try {
-                        sh "curl --fail --silent ${checkUrl}" // --fail вернет ненулевой код при ошибке HTTP (4xx/5xx)
-                        echo "Application is healthy!"
-                    } catch (e) {
-                        echo "Application health check failed: ${e.message}"
-                        error "Deployment verification failed!"
+                    echo "Checking application health at http://${REMOTE_HOST_IP}:5000/ping"
+                    timeout(time: 2, unit: 'MINUTES') {
+                        def maxRetries = 10
+                        def delayBetweenRetries = 10
+
+                        for (int i = 0; i < maxRetries; i++) {
+                            try {
+                                sh "curl --fail --silent http://${REMOTE_HOST_IP}:5000/ping"
+                                echo "Application health check successful!"
+                                break
+                        } catch (e) {
+                            if (i < maxRetries - 1) {
+                                echo "Application health check failed (attempt ${i + 1}/${maxRetries}). Retrying in ${delayBetweenRetries} seconds..."
+                                sleep delayBetweenRetries
+                        } else {
+                            error "Application health check failed after ${maxRetries} attempts."
                     }
                 }
             }
